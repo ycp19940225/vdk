@@ -210,7 +210,7 @@ func (self *Stream) writePacket(pkt av.Packet, rawdur time.Duration) (err error)
 		return
 	}
 
-	if _, err = self.muxer.w.Write(pkt.Data); err != nil {
+	if _, err = self.muxer.bufw.Write(pkt.Data); err != nil {
 		return
 	}
 
@@ -277,6 +277,10 @@ func (self *Muxer) WriteTrailer() (err error) {
 	}
 	moov.Header.TimeScale = int32(timeScale)
 	moov.Header.Duration = int32(timeToTs(maxDur, timeScale))
+
+	if err = self.bufw.Flush(); err != nil {
+		return
+	}
 
 	var mdatsize int64
 	if mdatsize, err = self.w.Seek(0, 1); err != nil {
